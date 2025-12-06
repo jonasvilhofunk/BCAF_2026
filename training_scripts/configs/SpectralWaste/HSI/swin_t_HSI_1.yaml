@@ -1,0 +1,128 @@
+dataset_name: "SpectralWaste" 
+modality: "hsi"
+labelled: True
+
+
+hardware:
+  gpu: "0"
+
+
+data_loading:
+  num_workers: 16    
+  pin_memory: True   
+  prefetch_factor: 2  
+  persistent_workers: True  
+  drop_last: True
+
+augmentation:
+  enable: True        # Master switch for all augmentations defined below
+  hsi_normalization:
+    enable: True
+    method: "standardize"  # Options: "standardize", "none"
+  pca_transform:
+    enable: False
+    sovgol: False
+    pca_path: ""
+  pad_channels:
+    enable: False
+    pad_channels_to: 224
+  resize: 
+    enable: True
+    size: 256 
+  random_rotate:
+    enable: True
+    degrees: [-5, 5] 
+  random_scale:
+    enable: True
+    scale_limit: [0.8, 1.3] 
+  random_crop:
+    enable: True
+    size: 256
+  random_flip:
+    enable: True
+    p_horizontal: 0.5 
+    p_vertical: 0.5
+  hsi_spectral_jitter:
+    enable: True
+    brightness: 0.10  # Additive noise range [-0.10, 0.10]
+    contrast: 0.10    # Multiplicative noise range [0.90, 1.10]
+
+
+backbone:
+  type: "swin"  # Swin Transformer
+  img_size: 256 
+  in_chans: 224
+  patch_size: 4
+  spectral_group_size: 45      
+  embed_dim: 96            
+  depths: [2, 2, 6, 2]
+  num_heads: [3, 6, 12, 24]
+  spatial_window_size: 7 
+  spatial_shift_size: 3               
+  mlp_ratio: 4.0            
+  qkv_bias: True           
+  drop_rate: 0.0            
+  attn_drop_rate: 0.0      
+  drop_path_rate: 0.3      
+  hsi_mode: rgb_adapter        # activates adapter route
+  adapter_kernel_size: 1       # optional (defaults to 1)
+
+head:           
+  dropout: 0.1                         
+  decoder_channels: [256, 128, 64]
+  encoder_channels: [96, 192, 384, 768]
+
+
+pretrained:
+  use_pretrained: "ImageNet"    # Options: "ImageNet", "Custom", or "None"
+  checkpoint_path: null         # Path to a .pth file if use_pretrained is "Custom"
+  model_name: "swin_tiny_patch4_window7_224"   # timm model name, used if use_pretrained="ImageNet" and checkpoint_path is null
+
+
+training:
+  random_seed: 40 
+
+  batch_size: 2
+  val_batch_size: 2
+  epochs: 1000
+  warmup_epochs: 5
+  learning_rate: 1.0e-4
+  lr_factors:
+    head: 1.0                    
+    backbone_pretrained: 0.1    
+    backbone_random: 1.0 
+
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  clip_grad_norm: 0 
+  amp: True
+
+  lr_scheduler:
+    type: "poly"
+    params:
+      power: 0.9
+
+
+  loss:
+    type: "ce_dice" # Options: # "ce", "dice", "focal", "ce_dice"
+    ce_weight: 0.5
+    dice_weight: 1.5
+    focal_gamma: 2.0
+    weighting:
+      strategy: "frequency"  # Options: "none", "custom", "frequency", "square_root"
+      # custom_weights: [0.5, 1.0, 1.0, 1.5, 1.5, 1.0, 1.0] # Example, adjust to num_classes if strategy is "custom"
+
+  checkpoint_dir: "./models/checkpoints/swin_t_SpectralWaste_hsi_1" # Specific to this experiment
+  model_dir: "./models/final"          # Specific to this experiment
+  model_name: "swin_t_SpectralWaste_hsi_1" # Prefix for saved model files
+  save_checkpoint_interval: 100 # Save checkpoint every N epochs (0 for best/last only)
+
+
+wandb:
+  enable: True
+  project: "SpectralWaste" 
+  run_name: "swin_t_SpectralWaste_hsi_1" # Unique name for this run
+
+visualization: #(for WandB)
+  max_images: 4
+  log_interval: 100

@@ -1,0 +1,113 @@
+dataset_name: "SpectralWaste"
+modality: "rgb"
+labelled: True
+ 
+
+hardware:
+  gpu: "0"
+
+
+data_loading:
+  num_workers: 16    
+  pin_memory: True    
+  prefetch_factor: 2 
+  persistent_workers: True  
+  drop_last: True
+
+augmentation:
+  enable: True        # Master switch for all augmentations defined below
+  rgb_normalization:
+    enable: True
+    method: "imagenet"  # Options: "imagenet", "none"
+  resize: 
+    enable: True
+    size: 256
+  random_rotate:
+    enable: True
+    degrees: [-5, 5] 
+  random_scale:
+    enable: True
+    scale_limit: [0.8, 1.3] 
+  random_crop:
+    enable: True
+    size: 256
+  random_flip:
+    enable: True
+    p_horizontal: 0.5 
+    p_vertical: 0.5
+  rgb_color_jitter:
+    enable: True
+    p: 0.8
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.03
+
+backbone:
+  type: "segformer"  # SegFormer
+  img_size: 256
+  in_chans: 3
+  pretrained: True
+  model_name: "nvidia/mit-b2" 
+
+head:
+  dropout: 0.0                        
+  encoder_channels: [64, 128, 320, 512]
+  decoder_channels: [512, 256, 128]  # SegFormer-B2 encoder channels
+
+
+pretrained:
+  use_pretrained: "imagenet"
+  model_name: "nvidia/mit-b2"
+
+
+
+
+training:
+  random_seed: 40 
+
+  batch_size: 2
+  val_batch_size: 2
+  epochs: 1000
+  warmup_epochs: 5
+  learning_rate: 1.0e-4
+  lr_factors:
+    head: 1.0                    
+    backbone_pretrained: 0.1    
+    backbone_random: 1.0 
+  
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  clip_grad_norm: 0 
+  amp: True
+  
+  lr_scheduler:
+    type: "poly" # "poly", "cosine"
+    params:
+      power: 0.9
+      # For 'cosine'
+      #min_lr: 1.0e-6
+
+  loss:
+    type: "ce_dice" # "ce", "dice", "focal", "ce_dice"
+    ce_weight: 0.5
+    dice_weight: 1.5
+    focal_gamma: 2.0
+    weighting:
+      strategy: "frequency" # "none", "custom", "frequency", "square_root"
+      # custom_weights: [0.5, 1.0, 1.0, 1.5, 1.5, 1.0, 1.0] # Example, adjust to num_classes if strategy is "custom"
+
+  checkpoint_dir: "./models/checkpoints/segformer_b2_rgb_256" 
+  model_dir: "./models/final"         
+  model_name: "segformer_b2_SpectralWaste_rgb_256" 
+  save_checkpoint_interval: 100 
+
+
+wandb:
+  enable: True
+  project: "SpectralWaste" 
+  run_name: "segformer_b2_rgb_256"
+
+visualization: #for Wandb
+  max_images: 4
+  log_interval: 100

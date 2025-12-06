@@ -1,0 +1,5 @@
+/datasets
+/checkpoints
+/models
+/wandb
+/training_scripts/__pycache__
