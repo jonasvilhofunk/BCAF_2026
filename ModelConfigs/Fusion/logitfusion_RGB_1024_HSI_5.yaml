@@ -1,0 +1,113 @@
+dataset_name: "SpectralWaste"
+modality: "rgb_hsi"
+model_type: "logitfusion" 
+
+rgb_model_config_path: "ModelConfigs/RGB/swin_t_rgb_1024.yaml" 
+rgb_checkpoint_path: "models/paper/swin_t_SpectralWaste_rgb_1024_best.pth"
+freeze_rgb_backbone: False
+freeze_rgb_head: False
+
+hsi_model_config_path: "ModelConfigs/HSI/adapted_swin_t_HSI_5.yaml" 
+hsi_checkpoint_path: "models/paper/adapted_swin_t_SpectralWaste_hsi_5_best.pth" 
+freeze_hsi_backbone: False
+freeze_hsi_head: False
+
+hardware:
+  gpu: "0" 
+
+
+data_loading:
+  num_workers: 16    
+  pin_memory: True   
+  prefetch_factor: 2  
+  persistent_workers: True  
+  drop_last: True
+
+augmentation:
+  enable: True
+  rgb_normalization:
+    enable: True
+    method: "imagenet"
+  hsi_normalization:
+    enable: True
+    method: "standardize"
+  pad_channels:
+    enable: True
+    pad_channels_to: 225
+  resize_rgb: 
+    enable: True
+    size: 1024 
+  resize_hsi: 
+    enable: True
+    size: 256 
+  random_rotate:
+    enable: True
+    degrees: [-5, 5] 
+  random_scale:
+    enable: True
+    scale_limit: [0.8, 1.3] 
+  random_crop_rgb:
+    enable: True
+    size: 1024
+  random_crop_hsi:
+    enable: True
+    size: 256
+  random_flip:
+    enable: True
+    p_horizontal: 0.5 
+    p_vertical: 0.5
+  rgb_color_jitter:
+    enable: True
+    p: 0.8
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.03
+
+
+training:
+  random_seed: 40
+
+  batch_size: 2
+  val_batch_size: 2
+  epochs: 1000
+  warmup_epochs: 5
+  learning_rate: 1.0e-4
+  lr_factors:
+    head: 1.0                    
+    backbone_pretrained: 0.1    
+    backbone_random: 1.0 
+
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  clip_grad_norm: 0 
+  amp: False
+  compile_model: False
+  
+  lr_scheduler:
+    type: "poly"
+    params:
+      power: 0.9
+
+  loss:
+    type: "ce_dice"
+    ce_weight: 0.5
+    dice_weight: 1.5
+    weighting:
+      strategy: "frequency" 
+
+  checkpoint_dir: "./model/checkpoints/SpectralWaste/logitfusion_rgb1024_hsi5" 
+  model_dir: "./models/final"         
+  model_name: "SpectralWaste_logitfusion_rgb1024_hsi5" 
+  save_checkpoint_interval: 100 
+
+
+wandb:
+  enable: True
+  project: "BCAF_2026_SpectralWaste" 
+  run_name: "logitfusion_rgb1024_hsi5"
+
+
+visualization: #for Wandb
+  max_images: 4
+  log_interval: 100

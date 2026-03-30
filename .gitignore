@@ -1,5 +1,5 @@
-/datasets
-/checkpoints
-/models
+/datasets/spectralwaste_npz/images
 /wandb
+/models/checkpoints
+/models/final
 /training_scripts/__pycache__
