@@ -1,0 +1,15 @@
+# Check CUDA version with: nvidia-smi
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch==2.11.0
+torchvision==0.26.0
+numpy
+Pillow
+PyYAML
+tqdm
+matplotlib
+timm
+ipywidgets
+jupyterlab
+tifffile
+# Optional: training logging
+# wandb

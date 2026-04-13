@@ -1,0 +1,24 @@
+# Datasets
+/datasets/spectralwaste_segmentation/
+/datasets/spectralwaste_segmentation_npz/
+
+# Model weights
+/models/paper/
+/models/checkpoints/
+
+# Virtual environment
+Env_BCAF/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Wandb
+/wandb/
+
+# OS
+.DS_Store

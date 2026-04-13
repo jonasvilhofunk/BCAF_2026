@@ -1,0 +1,121 @@
+# ═══════════════════════════════════════════════════════════
+# CONFIGURE — change these to train on a new dataset / setup
+# ═══════════════════════════════════════════════════════════
+
+dataset_name: "SpectralWaste"        # ← your dataset name
+modality: "hsi"
+labelled: True
+
+_hsi_size: &hsi_size 256             # ← spatial HSI image size (drives resize, crop & backbone)
+_in_chans: &in_chans 225             # ← Padded HSI channels (>= raw channel count). Must be divisible by spectral_group_size.
+_spectral_group_size: &spectral_group_size 45  # ← Channels per spectral group (in_chans / spectral_group_size = k, i.e. HSI_k in filename).
+
+_batch_size: &batch_size 2           # ← samples per GPU
+_epochs: &epochs 5                   # ← total training epochs
+_checkpoint_dir: &checkpoint_dir "./models/checkpoints/adapted_swin_t_SpectralWaste_hsi_5"  # ← save path
+_save_interval: &save_interval 1     # ← save every N epochs (0 = only best)
+
+hardware:
+  gpu: "0"                           # ← GPU index
+
+# ═══════════════════════════════════════════════════════════
+# FIXED — safe defaults, no need to change
+# ═══════════════════════════════════════════════════════════
+
+data_loading:
+  num_workers: 4
+  pin_memory: True
+  prefetch_factor: 2
+  persistent_workers: True
+  drop_last: True
+
+augmentation:
+  enable: True        # master switch for all augmentations below
+  hsi_normalization:
+    enable: True
+    method: "standardize"  # Options: "standardize", "none"
+  pad_channels:
+    enable: True
+    pad_channels_to: *in_chans
+  resize:
+    enable: True
+    size: *hsi_size
+  random_rotate:
+    enable: True
+    degrees: [-5, 5]
+  random_scale:
+    enable: True
+    scale_limit: [0.8, 1.3]
+  random_crop:
+    enable: True
+    size: *hsi_size
+  random_flip:
+    enable: True
+    p_horizontal: 0.5
+    p_vertical: 0.5
+  hsi_spectral_jitter:
+    enable: True
+    brightness: 0.10  # additive noise range [-0.10, 0.10]
+    contrast: 0.10    # multiplicative noise range [0.90, 1.10]
+
+backbone:
+  img_size: *hsi_size
+  in_chans: *in_chans
+  patch_size: 4
+  spectral_group_size: *spectral_group_size
+  embed_dim: 96
+  depths: [3, 3, 9, 3]
+  num_heads: [3, 6, 12, 24]
+  spatial_window_size: 7
+  spatial_shift_size: 3
+  mlp_ratio: 4.0
+  qkv_bias: True
+  drop_rate: 0.0
+  attn_drop_rate: 0.0
+  drop_path_rate: 0.3
+
+head:
+  dropout: 0.1
+  decoder_channels: [256, 128, 64]
+  encoder_channels: [96, 192, 384, 768]
+
+pretrained:
+  use_pretrained: "ImageNet"  # Options: "ImageNet", "Custom", or "None"
+  checkpoint_path: null        # Path to a .pth file if use_pretrained is "Custom"
+  model_name: "swin_tiny_patch4_window7_224"
+
+training:
+  batch_size: *batch_size
+  epochs: *epochs
+  checkpoint_dir: *checkpoint_dir
+  save_checkpoint_interval: *save_interval
+  random_seed: 40
+  warmup_epochs: 5
+  learning_rate: 1.0e-4
+  lr_factors:
+    head: 1.0
+    backbone_pretrained: 0.1
+    backbone_random: 1.0
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  clip_grad_norm: 0
+  amp: True
+  lr_scheduler:
+    type: "poly"
+    params:
+      power: 0.9
+  loss:
+    type: "ce_dice"
+    ce_weight: 0.5
+    dice_weight: 1.5
+    weighting:
+      strategy: "frequency"
+
+wandb:
+  enable: False                       # ← set False to disable W&B logging
+  project: "BCAF_2026_SpectralWaste"
+  run_name: "adapted_swin_t_SpectralWaste_hsi_5"
+
+visualization:  # for W&B
+  max_images: 4
+  log_interval: 1
