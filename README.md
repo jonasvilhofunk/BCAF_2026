@@ -39,7 +39,7 @@
 We present **Bidirectional Cross-Attention Fusion (BCAF)**, which aligns high-resolution RGB 
 with low-resolution HSI at their native grids via localized, bidirectional cross-attention, 
 avoiding spatial pre-upsampling or early spectral collapse. (On the [SpectralWaste](https://github.com/ferpb/spectralwaste-segmentation) dataset, BCAF achieves 
-state-of-the-art performance of **76.4% mIoU** at 31 images/s.)
+strong performance of **75.4% mIoU** at 55 images/s.)
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/ff90dc60-68e8-4e23-a965-827e5dbbc105"
