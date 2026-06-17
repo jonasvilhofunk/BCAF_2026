@@ -1,6 +1,6 @@
 <h1 align="center">
-  Bidirectional Cross-Attention Fusion of High-Res RGB and Low-Res HSI
-  for Multimodal Automated Waste Sorting
+  Bidirectional Cross-Attention Fusion of High-Resolution RGB and
+Low-Resolution Hyperspectral Inputs for Multimodal Semantic Segmentation
 </h1>
 
 <p align="center">
